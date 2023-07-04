@@ -9,29 +9,21 @@
   <body>
     <div id="p1"></div>
     <div id="p2"></div>
-    <div id="p3"></div>
   </body>
 </html>
 
 <script>
-  const { reactive, effect } = Vue;
-  const obj = reactive({
-    count: 1,
-    name: '张三',
-    age: 14,
-    hobby: {
-      a: 1
-    }
+  const { ref, effect } = Vue;
+  const obj = ref({
+    count: 1
   });
 
-  effect(() => {
-    p1.innerHTML = obj.count;
-  });
+  const name = ref('张三');
 
   effect(() => {
-    p2.innerHTML = `${obj.name}---${obj.age}`;
+    p1.innerHTML = obj.value.count;
   });
   effect(() => {
-    p3.innerHTML = obj.hobby.a;
+    p2.innerHTML = name.value;
   });
 </script>
