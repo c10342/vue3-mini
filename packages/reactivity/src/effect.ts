@@ -1,4 +1,4 @@
-import { isArray } from '@vue/shared';
+import { extend, isArray } from '@vue/shared';
 import { Dep, createDep } from './dep';
 import { ComputedRefTmpl } from './computed';
 
@@ -12,10 +12,22 @@ import { ComputedRefTmpl } from './computed';
 type KeyToDepMap = Map<any, Dep>;
 const targetMap = new WeakMap<any, KeyToDepMap>();
 
-export function effect<T = any>(fn: () => T) {
+export interface ReactiveEffectOptions {
+  // 懒执行
+  lazy?: boolean;
+  // 调度器，作用：控制执行顺序，控制执行规则
+  scheduler?: EffectScheduler;
+}
+export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
   const _effect = new ReactiveEffect(fn);
-  //   effect会立刻执行一次，触发getter依赖收集
-  _effect.run();
+  if (options) {
+    // 将scheduler合并到_effect中
+    extend(_effect, options);
+  }
+  if (!options || !options.lazy) {
+    //  如果不是懒执行， effect会立刻执行一次，触发getter依赖收集
+    _effect.run();
+  }
 }
 
 // 记录当前的effect
@@ -30,6 +42,10 @@ export class ReactiveEffect<T = any> {
   run() {
     activeEffect = this;
     return this.fn();
+  }
+
+  stop() {
+    // todo
   }
 }
 
