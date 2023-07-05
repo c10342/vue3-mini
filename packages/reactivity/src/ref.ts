@@ -7,6 +7,10 @@ export interface Ref<T = any> {
   value: T;
 }
 
+export interface BaseRef {
+  dep?: Dep;
+}
+
 export function ref(value?: unknown) {
   return createRef(value, false);
 }
@@ -27,16 +31,19 @@ class RefImpl<T> {
   public readonly __v__isRef = true;
   constructor(value: T, public readonly __v__isShallow: boolean) {
     // 是否浅层响应式
+    // 如果是一个对象，底层实际还是通过reactive实现
     this._value = __v__isShallow ? value : toReavtive(value);
     this._rawValue = value;
   }
 
+  //   通过 get value触发依赖收集
   get value() {
     // 收集依赖
     trackRefValue(this);
     return this._value;
   }
 
+  //   通过 set value 触发依赖执行
   set value(newVal) {
     // 对比新旧数据是否发生了变化
     if (hasChanged(newVal, this._rawValue)) {
@@ -48,14 +55,14 @@ class RefImpl<T> {
 }
 
 // 收集依赖
-export function trackRefValue(ref: RefImpl<any>) {
+export function trackRefValue(ref: BaseRef) {
   if (activeEffect) {
     trackEffects(ref.dep || (ref.dep = createDep()));
   }
 }
 
 // 触发依赖
-export function triggerRefValue(ref: RefImpl<any>) {
+export function triggerRefValue(ref: BaseRef) {
   if (ref.dep) {
     triggerEffects(ref.dep);
   }

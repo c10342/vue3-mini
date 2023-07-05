@@ -1,5 +1,6 @@
 import { isArray } from '@vue/shared';
 import { Dep, createDep } from './dep';
+import { ComputedRefTmpl } from './computed';
 
 /**
  * 收集所有依赖的 WeakMap 实例：
@@ -20,8 +21,11 @@ export function effect<T = any>(fn: () => T) {
 // 记录当前的effect
 export let activeEffect: ReactiveEffect | null = null;
 
+export type EffectScheduler = (...args: any[]) => any;
+
 export class ReactiveEffect<T = any> {
-  constructor(public fn: () => T) {}
+  computed?: ComputedRefTmpl<T>;
+  constructor(public fn: () => T, public scheduler?: EffectScheduler) {}
 
   run() {
     activeEffect = this;
@@ -73,12 +77,37 @@ export function trigger(target: object, key: unknown, newVal: unknown) {
 // 依次触发dep中保存的依赖
 export function triggerEffects(dep: Dep) {
   const effects = isArray(dep) ? dep : [...dep];
+  // 要先执行computed的effect
+  // 然后再执行非计算属性的effect，防止死循环
+  // why:自己收集了自己，导致死循环
+  // eg:
+  // const text = computed();
+  // effect(() => {
+  //   p1.innerHTML = text.value;
+  // 第二次读取的时候，由于在第一次读取的时候，activeEffect就变成computed自己了
+  // 再次读取的时候，会把自己当做依赖收集进去
+  // 更新依赖的时候，由于执行了scheduler，scheduler里面又再次更新依赖，所以导致了死循环
+  //   p1.innerHTML = text.value;
+  // });
   for (const effect of effects) {
-    triggerEffect(effect);
+    if (effect.computed) {
+      triggerEffect(effect);
+    }
+  }
+
+  for (const effect of effects) {
+    if (!effect.computed) {
+      triggerEffect(effect);
+    }
   }
 }
 
 // 触发依赖
 export function triggerEffect(effect: ReactiveEffect) {
-  effect.run();
+  if (effect.scheduler) {
+    // computed依赖的值发生变化，需要执行调度器，而不是run
+    effect.scheduler();
+  } else {
+    effect.run();
+  }
 }
