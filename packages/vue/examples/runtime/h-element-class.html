@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body></body>
+</html>
+<script src="../../dist/vue.js"></script>
+<script>
+  const { h } = Vue;
+  const vnode1 = h(
+    'div',
+    {
+      class: 'test'
+    },
+    'hello word'
+  );
+  const vnode2 = h(
+    'div',
+    {
+      class: { test: true, aa: true }
+    },
+    'hello word'
+  );
+
+  const vnode3 = h(
+    'div',
+    {
+      class: [{ test: true }, { bb: true }, 'c']
+    },
+    'hello word'
+  );
+
+  console.log(vnode3);
+</script>

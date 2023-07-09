@@ -27,3 +27,13 @@ export const isFunction = (val: unknown): val is Function =>
 export const extend = Object.assign;
 
 export const EMPTY_OBJ: { readonly [key: string]: any } = {};
+
+/**
+ * 判断是否为一个 string
+ */
+export const isString = (val: unknown): val is string =>
+  typeof val === 'string';
+
+export { normalizeClass } from './normalizeProp';
+
+export { ShapeFlags } from './shapeFlags';
